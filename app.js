@@ -74,25 +74,50 @@ function updateChart(features) {
     options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0}}}}});
 }
 async function load() {
+  // Load PBPH boundary independently: a missing hotspot file must not hide the map.
   try {
-    const [pbphRes, hotRes]=await Promise.all([
-      fetch("data/pbph.geojson?t="+Date.now()),
-      fetch("data/hotspot.geojson?t="+Date.now())
-    ]);
-    if(!pbphRes.ok) throw new Error("Batas PBPH tidak dapat dimuat.");
-    if(!hotRes.ok) throw new Error("Data hotspot belum tersedia.");
-    const pbph=await pbphRes.json(), hot=await hotRes.json();
-    pbphLayer=L.geoJSON(pbph,{style:{color:"#14532d",weight:3,fillColor:"#86b99a",fillOpacity:.12}}).addTo(map);
-    map.fitBounds(pbphLayer.getBounds(),{padding:[20,20]});
-    allFeatures=hot.features||[];
-    const sources=[...new Set(allFeatures.map(f=>f.properties?.source).filter(Boolean))].sort();
-    sources.forEach(s=>{const o=document.createElement("option");o.value=s;o.textContent=s;$("sensor").appendChild(o);});
+    const pbphRes = await fetch("./data/pbph.geojson?t=" + Date.now());
+    if (!pbphRes.ok) throw new Error(`PBPH GeoJSON HTTP ${pbphRes.status}`);
+    const pbph = await pbphRes.json();
+    if (pbphLayer) map.removeLayer(pbphLayer);
+    pbphLayer = L.geoJSON(pbph, {
+      style: { color: "#14532d", weight: 3, fillColor: "#86b99a", fillOpacity: .12 }
+    }).addTo(map);
+    if (pbphLayer.getBounds().isValid()) map.fitBounds(pbphLayer.getBounds(), { padding: [20, 20] });
+  } catch (e) {
+    console.error("Gagal memuat batas PBPH:", e);
+    $("updated").textContent = "Batas PBPH gagal dimuat: " + e.message;
+  }
+
+  try {
+    const hotRes = await fetch("./data/hotspot.geojson?t=" + Date.now());
+    if (!hotRes.ok) throw new Error(`Hotspot GeoJSON HTTP ${hotRes.status}. Pastikan workflow NASA FIRMS sudah membuat file ini.`);
+    const hot = await hotRes.json();
+    if (hot.type !== "FeatureCollection" || !Array.isArray(hot.features)) {
+      throw new Error("Format hotspot.geojson bukan FeatureCollection yang valid.");
+    }
+    allFeatures = hot.features;
+    const sources = [...new Set(allFeatures.map(f => f.properties?.source).filter(Boolean))].sort();
+    $("sensor").innerHTML = '<option value="">Semua satelit</option>';
+    sources.forEach(s => {
+      const o = document.createElement("option"); o.value = s; o.textContent = s; $("sensor").appendChild(o);
+    });
+    const dates = [...new Set(allFeatures.map(f => f.properties?.acq_date).filter(Boolean))].sort().reverse();
+    $("dateFilter").innerHTML = '<option value="">Semua tanggal</option>';
+    dates.forEach(d => {
+      const o = document.createElement("option"); o.value = d; o.textContent = d; $("dateFilter").appendChild(o);
+    });
     render();
-    $("updated").textContent="Sumber: NASA FIRMS · Riwayat rolling 7 hari · Halaman dimuat: "+new Date().toLocaleString("id-ID");
-  } catch(e) {
-    $("rows").innerHTML=`<tr><td colspan="8">${e.message} Jalankan workflow GitHub Actions terlebih dahulu.</td></tr>`;
-    $("tableInfo").textContent="Data belum tersedia";
-    console.error(e);
+    $("updated").textContent = "NASA FIRMS · " + allFeatures.length + " hotspot · Dimuat: " + new Date().toLocaleString("id-ID");
+    if (!allFeatures.length) {
+      $("tableInfo").textContent = "File tersedia, tetapi belum ada hotspot di dalam polygon PBPH TMK.";
+    }
+  } catch (e) {
+    console.error("Gagal memuat hotspot:", e);
+    allFeatures = [];
+    render();
+    $("tableInfo").textContent = "Data hotspot belum tersedia: " + e.message;
+    $("updated").textContent = "Periksa GitHub Actions dan file data/hotspot.geojson.";
   }
 }
 ["confidence","sensor","dateFilter"].forEach(id=>$(id).addEventListener("change",render));
