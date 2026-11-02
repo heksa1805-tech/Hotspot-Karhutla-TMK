@@ -23,7 +23,7 @@ SENSORS = [
     "VIIRS_NOAA21_NRT",
     "MODIS_NRT",
 ]
-DAYS = 2
+DAYS = 1
 HISTORY_DAYS = 7
 
 def empty_outputs():
