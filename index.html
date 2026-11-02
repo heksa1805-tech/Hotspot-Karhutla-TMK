@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>TMK | Monitoring Hotspot NASA FIRMS</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">PT TELAGA MAS KALIMANTAN</div>
+    <h1>Monitoring Hotspot & Karhutla</h1>
+    <p>NASA FIRMS · Wilayah PBPH TMK · Pembaruan otomatis setiap 3 jam</p>
+  </div>
+  <div class="live"><span></span> DATA SATELIT</div>
+</header>
+
+<main class="wrap">
+  <section class="cards">
+    <article class="card"><div class="muted">Hotspot terpantau</div><strong id="total">—</strong><small>Dalam wilayah PBPH · 7 hari</small></article>
+    <article class="card"><div class="muted">Confidence High</div><strong id="high">—</strong><small>Prioritas verifikasi lapangan</small></article>
+    <article class="card"><div class="muted">Deteksi 24 jam</div><strong id="last24">—</strong><small>Berdasarkan waktu akuisisi UTC</small></article>
+    <article class="card"><div class="muted">Satelit terdeteksi</div><strong id="sensors">—</strong><small>Sumber NRT yang tersedia</small></article>
+  </section>
+
+  <section class="panel">
+    <div class="panelhead">
+      <div><h2>Peta sebaran hotspot PBPH TMK</h2><p>Batas PBPH ditampilkan sebagai polygon; hotspot difilter secara spasial.</p></div>
+      <div class="legend"><span class="dot red"></span> High <span class="dot orange"></span> Nominal <span class="dot yellow"></span> Low</div>
+    </div>
+    <div id="map"></div>
+  </section>
+
+  <section class="grid2">
+    <section class="panel">
+      <div class="panelhead"><div><h2>Tren deteksi harian</h2><p>Jumlah hotspot per tanggal akuisisi.</p></div></div>
+      <div class="chartbox"><canvas id="trend"></canvas></div>
+    </section>
+    <section class="panel">
+      <div class="panelhead"><div><h2>Filter data</h2><p>Filter tabel dan titik pada peta.</p></div></div>
+      <div class="filters">
+        <label>Tingkat confidence
+          <select id="confidence"><option value="">Semua</option><option value="h">High</option><option value="n">Nominal</option><option value="l">Low</option></select>
+        </label>
+        <label>Sumber satelit
+          <select id="sensor"><option value="">Semua satelit</option></select>
+        </label>
+        <label>Pencarian tanggal (YYYY-MM-DD)
+          <input id="dateFilter" type="date">
+        </label>
+        <button id="reset">Reset filter</button>
+      </div>
+      <div class="note">Hotspot adalah indikasi anomali termal, bukan bukti pasti kebakaran. Lakukan verifikasi lapangan sebelum menetapkan kejadian karhutla.</div>
+    </section>
+  </section>
+
+  <section class="panel">
+    <div class="panelhead">
+      <div><h2>Daftar hotspot</h2><p id="tableInfo">Memuat data...</p></div>
+      <button id="download">Unduh CSV</button>
+    </div>
+    <div class="tablewrap">
+      <table>
+        <thead><tr><th>Tanggal</th><th>Jam UTC</th><th>Latitude</th><th>Longitude</th><th>Satelit</th><th>Confidence</th><th>FRP (MW)</th><th>Lokasi</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="8">Memuat data hotspot...</td></tr></tbody>
+      </table>
+    </div>
+  </section>
+  <footer id="updated">Sumber: NASA FIRMS · Data diperbarui melalui GitHub Actions.</footer>
+</main>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
