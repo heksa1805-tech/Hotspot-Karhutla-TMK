@@ -13,7 +13,7 @@ PBPH_FILE = DATA / "pbph.geojson"
 HISTORY_FILE = DATA / "hotspot_history.csv"
 OUTPUT_GEOJSON = DATA / "hotspot.geojson"
 OUTPUT_CSV = DATA / "hotspot.csv"
-API_KEY = os.environ["FIRMS_MAP_KEY"]
+API_KEY = os.environ.get("FIRMS_MAP_KEY", "").strip()
 
 # FIRMS near-real-time sources. MODIS_SP (standard processing) is
 # intentionally excluded from the operational NRT feed.
@@ -23,7 +23,7 @@ SENSORS = [
     "VIIRS_NOAA21_NRT",
     "MODIS_NRT",
 ]
-DAYS = 1
+DAYS = 2
 HISTORY_DAYS = 7
 
 def empty_outputs():
@@ -32,6 +32,10 @@ def empty_outputs():
     pd.DataFrame().to_csv(OUTPUT_CSV, index=False)
 
 def main():
+    # Always create a valid GeoJSON placeholder so the Leaflet URL exists.
+    DATA.mkdir(parents=True, exist_ok=True)
+    if not OUTPUT_GEOJSON.exists():
+        empty_outputs()
     if not API_KEY:
         raise RuntimeError("FIRMS_MAP_KEY belum diatur pada GitHub Secrets.")
 
