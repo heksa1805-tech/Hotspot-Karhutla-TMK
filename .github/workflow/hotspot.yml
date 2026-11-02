@@ -1,1 +1,44 @@
+name: NASA FIRMS Hotspot Monitoring TMK
 
+on:
+  schedule:
+    - cron: "7 */3 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: tmk-firms-update
+  cancel-in-progress: false
+
+jobs:
+  update-hotspots:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: "pip"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas requests geopandas shapely
+
+      - name: Fetch NASA FIRMS and filter PBPH TMK
+        env:
+          FIRMS_MAP_KEY: ${{ secrets.FIRMS_MAP_KEY }}
+        run: python scripts/fetch_firms.py
+
+      - name: Commit updated hotspot data
+        run: |
+          git config user.name "TMK Hotspot Bot"
+          git config user.email "actions@users.noreply.github.com"
+          git add data/hotspot.geojson data/hotspot.csv data/hotspot_history.csv
+          git diff --cached --quiet || git commit -m "Update NASA FIRMS hotspot data"
+          git push
